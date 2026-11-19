@@ -1,0 +1,33 @@
+[package]
+name = "gjallar"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.89"
+description = "Web Push for servers: RFC 8291 encryption, VAPID, Declarative Web Push, with an optional blocking client"
+license = "MIT"
+repository = "https://github.com/GustavoWidman/gjallar"
+documentation = "https://docs.rs/gjallar"
+readme = "readme.md"
+keywords = ["web-push", "vapid", "push", "notifications", "rfc8291"]
+categories = ["web-programming", "cryptography", "network-programming"]
+include = ["/src", "/examples", "/tests", "/LICENSE", "/readme.md"]
+
+[features]
+## A blocking client on ureq (rustls), for sending without bringing your own.
+client = ["dep:ureq"]
+
+[dependencies]
+aes-gcm = "0.11"
+base64 = "0.23"
+getrandom = "0.4"
+hkdf = "0.13"
+http = "1"
+httpdate = "1"
+p256 = { version = "0.14", default-features = false, features = ["ecdh", "ecdsa", "getrandom", "pem", "std"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.11"
+ureq = { version = "3", optional = true, default-features = false, features = ["rustls"] }
+
+[package.metadata.docs.rs]
+all-features = true
