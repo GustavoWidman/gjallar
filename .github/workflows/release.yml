@@ -50,6 +50,9 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: write
+      # crates.io trusts this workflow and trades its OIDC token for one that expires
+      # when the job ends, so no crates.io token is stored anywhere
+      id-token: write
     steps:
       - uses: actions/checkout@v5
         with:
@@ -57,9 +60,11 @@ jobs:
           fetch-depth: 0
       # cargo publish builds the packaged crate once more before uploading it
       - run: rustup toolchain install stable --profile minimal && rustup default stable
+      - uses: rust-lang/crates-io-auth-action@v1
+        id: crates-io
       - name: Publish to crates.io
         env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+          CARGO_REGISTRY_TOKEN: ${{ steps.crates-io.outputs.token }}
         run: bash .github/scripts/publish-crate.sh
       - name: Tag and release
         env:

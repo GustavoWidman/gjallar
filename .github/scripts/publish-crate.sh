@@ -3,7 +3,7 @@
 # a release run that stopped after publishing can be rerun to finish the tag.
 set -euo pipefail
 
-: "${CARGO_REGISTRY_TOKEN:?set CARGO_REGISTRY_TOKEN to a crates.io API token}"
+: "${CARGO_REGISTRY_TOKEN:?set CARGO_REGISTRY_TOKEN to a crates.io token}"
 VERSION=$(python3 .github/scripts/version.py current)
 
 # The sparse index lists every published version, one JSON object a line. It answers
