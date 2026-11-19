@@ -1,0 +1,68 @@
+name: release
+
+# A push to main that brings a version with no release yet is checked, published to
+# crates.io, then tagged and released at that commit. A push that releases nothing,
+# such as a pull request labeled no-release, stops after the first job.
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: release-main
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  # A failed API request fails the run rather than passing for a missing release, and a
+  # draft counts as a release, as in release-tag.sh.
+  version:
+    name: Find a version to release
+    runs-on: ubuntu-24.04
+    outputs:
+      release: ${{ steps.find.outputs.release }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.sha }}
+      - id: find
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="v$(python3 .github/scripts/version.py current)"
+          releases=$(gh api --paginate 'repos/{owner}/{repo}/releases?per_page=100')
+          if jq -es --arg tag "$tag" 'any(.[][]; .tag_name == $tag)' <<< "$releases" > /dev/null; then
+            echo "$tag is already released; nothing to do"
+            printf 'release=false\n' >> "$GITHUB_OUTPUT"
+          else
+            echo "Releasing $tag"
+            printf 'release=true\n' >> "$GITHUB_OUTPUT"
+          fi
+
+  validate:
+    needs: version
+    if: needs.version.outputs.release == 'true'
+    uses: ./.github/workflows/check.yml
+
+  release:
+    needs: validate
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+      # cargo publish builds the packaged crate once more before uploading it
+      - run: rustup toolchain install stable --profile minimal && rustup default stable
+      - name: Publish to crates.io
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: bash .github/scripts/publish-crate.sh
+      - name: Tag and release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_SHA: ${{ github.sha }}
+        run: bash .github/scripts/release-tag.sh
