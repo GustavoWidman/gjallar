@@ -31,3 +31,7 @@ ureq = { version = "3", optional = true, default-features = false, features = ["
 
 [package.metadata.docs.rs]
 all-features = true
+
+[[example]]
+name = "send"
+required-features = ["client"]
