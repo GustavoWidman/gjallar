@@ -1,6 +1,8 @@
 //! Web Push for servers.
 
 mod base64url;
+#[cfg(feature = "client")]
+mod client;
 mod declarative;
 mod ece;
 mod error;
@@ -11,6 +13,8 @@ mod receiver;
 mod subscription;
 mod vapid;
 
+#[cfg(feature = "client")]
+pub use client::Client;
 pub use declarative::{Action, Declarative, Dir, Notification};
 pub use ece::MAX_PAYLOAD;
 pub use error::Error;
